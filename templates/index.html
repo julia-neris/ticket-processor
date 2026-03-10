@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Frotas - Automação de Faturas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Background com animação Vanta -->
+    <div id="vanta-bg"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <!-- Ícone de Caminhão/Frota -->
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 3H1V16H16V3Z" stroke="#a8ffee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 8H20L23 11V16H16V8Z" stroke="#a8ffee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="5.5" cy="18.5" r="2.5" stroke="#a8ffee" stroke-width="2"/>
+                    <circle cx="18.5" cy="18.5" r="2.5" stroke="#a8ffee" stroke-width="2"/>
+                </svg>
+                <h1>Gestão de Frotas</h1>
+            </div>
+            <nav class="nav">
+                <span class="nav-item active" data-tab="ticket" onclick="switchTab('ticket')">
+                    <!-- Ícone Ticket/Alimentação -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 5V7M15 11V13M15 17V19M5 5C3.89543 5 3 5.89543 3 7V10C4.10457 10 5 10.8954 5 12C5 13.1046 4.10457 14 3 14V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V14C19.8954 14 19 13.1046 19 12C19 10.8954 19.8954 10 21 10V7C21 5.89543 20.1046 5 19 5H5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Ticket
+                </span>
+                <span class="nav-item" data-tab="semparar" onclick="switchTab('semparar')">
+                    <!-- Ícone Pedágio/Sem Parar -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 12H16M12 8V16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sem Parar
+                </span>
+                
+                <!-- Toggle Modo Claro/Escuro -->
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+                    <!-- Ícone Sol (Modo Claro) -->
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <!-- Ícone Lua (Modo Escuro) -->
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- ========== TAB TICKET ========== -->
+            <div id="tab-ticket" class="tab-content active">
+                <!-- Upload Section -->
+                <section class="upload-section">
+                    <div class="upload-card">
+                        <div class="upload-icon ticket-icon">
+                            <!-- Ícone Ticket/Alimentação -->
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15 5V7M15 11V13M15 17V19M5 5C3.89543 5 3 5.89543 3 7V10C4.10457 10 5 10.8954 5 12C5 13.1046 4.10457 14 3 14V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V14C19.8954 14 19 13.1046 19 12C19 10.8954 19.8954 10 21 10V7C21 5.89543 20.1046 5 19 5H5Z" stroke="#2980B9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h2>Faturas Ticket </h2>
+                        <p>Extrai Razão Social, NFS-e e DPS/Série dos PDFs de faturas Ticket</p>
+                        
+                        <!-- Opção: Pasta Local -->
+                        <div class="folder-input-section folder-ticket">
+                            <label for="pasta-ticket" class="folder-label">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Caminho da Pasta com PDFs:
+                            </label>
+                            <input type="text" id="pasta-ticket" class="folder-input folder-input-ticket" placeholder="Ex: C:\Users\Faturas\Ticket">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="renomear-checkbox-ticket" checked>
+                                <label for="renomear-checkbox-ticket">Renomear arquivos com Razão Social</label>
+                            </div>
+                            <button type="button" class="btn-primary" id="btn-processar-pasta-ticket" onclick="processarPastaTicket()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Processar Pasta
+                            </button>
+                        </div>
+
+                        <div class="divider divider-ticket">
+                            <span>ou faça upload manual</span>
+                        </div>
+                        
+                        <form id="upload-form-ticket" enctype="multipart/form-data">
+                            <div class="drop-zone" id="drop-zone-ticket">
+                                <input type="file" id="file-input-ticket" name="arquivos" multiple accept=".pdf" hidden>
+                                <span class="drop-zone-text">Clique ou arraste os PDFs aqui</span>
+                            </div>
+                            
+                            <div id="file-list-ticket" class="file-list"></div>
+                            
+                            <button type="submit" class="btn-primary" id="btn-processar-ticket" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 4V20M8 12H20M20 12L16 8M20 12L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Processar arquivos
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Progress Section -->
+                <section class="progress-section" id="progress-section-ticket" style="display: none;">
+                    <div class="progress-card">
+                        <h3>Processando...</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-ticket"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text-ticket">0%</span>
+                    </div>
+                </section>
+
+                <!-- Results Section -->
+                <section class="results-section" id="results-section-ticket" style="display: none;">
+                    <div class="results-card">
+                        <div class="results-header">
+                            <h3>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Dados Extraídos - Ticket
+                            </h3>
+                            <button class="btn-success" id="btn-download-ticket">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15V3M12 15L8 11M12 15L16 11M2 17L2.621 19.485C2.72915 19.9177 2.97882 20.3018 3.33033 20.5763C3.68184 20.8508 4.11501 20.9999 4.561 21H19.439C19.885 20.9999 20.3182 20.8508 20.6697 20.5763C21.0212 20.3018 21.2708 19.9177 21.379 19.485L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Baixar Excel
+                            </button>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table class="data-table" id="data-table-ticket">
+                                <thead>
+                                    <tr>
+                                        <th>Arquivo</th>
+                                        <th>Razão Social</th>
+                                        <th>Número NFS-e Nacional</th>
+                                        <th>Número DPS / Série DPS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-ticket">
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="results-footer">
+                            <span id="total-registros-ticket">0 registros processados</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ========== TAB SEM PARAR ========== -->
+            <div id="tab-semparar" class="tab-content">
+                <!-- Upload Section -->
+                <section class="upload-section">
+                    <div class="upload-card semparar-card">
+                        <div class="upload-icon semparar-icon">
+                            <!-- Ícone Pedágio/Estrada -->
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#27AE60" stroke-width="2"/>
+                                <path d="M8 12H16M12 8V16" stroke="#27AE60" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h2>Faturas Sem Parar - Pedágio</h2>
+                        <p>Extrai CNPJ, Fatura, Nota Fiscal e Razão Social dos PDFs de pedágio</p>
+                        
+                        <!-- Opção: Pasta Local -->
+                        <div class="folder-input-section">
+                            <label for="pasta-semparar" class="folder-label">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Caminho da Pasta com PDFs:
+                            </label>
+                            <input type="text" id="pasta-semparar" class="folder-input" placeholder="Ex: C:\Users\Faturas\SemParar">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="renomear-checkbox" checked>
+                                <label for="renomear-checkbox">Renomear arquivos com Razão Social</label>
+                            </div>
+                            <button type="button" class="btn-primary btn-semparar" id="btn-processar-pasta" onclick="processarPastaSemparar()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Processar Pasta
+                            </button>
+                        </div>
+
+                        <div class="divider">
+                            <span>ou faça upload manual</span>
+                        </div>
+                        
+                        <form id="upload-form-semparar" enctype="multipart/form-data">
+                            <div class="drop-zone drop-zone-semparar" id="drop-zone-semparar">
+                                <input type="file" id="file-input-semparar" name="arquivos" multiple accept=".pdf" hidden>
+                                <span class="drop-zone-text">Clique ou arraste os PDFs aqui</span>
+                            </div>
+                            
+                            <div id="file-list-semparar" class="file-list"></div>
+                            
+                            <button type="submit" class="btn-primary btn-semparar" id="btn-processar-semparar" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 4V20M8 12H20M20 12L16 8M20 12L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Processar arquivos
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Progress Section -->
+                <section class="progress-section" id="progress-section-semparar" style="display: none;">
+                    <div class="progress-card progress-card-semparar">
+                        <h3>Processando...</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-fill-semparar" id="progress-fill-semparar"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text-semparar">0%</span>
+                    </div>
+                </section>
+
+                <!-- Results Section -->
+                <section class="results-section" id="results-section-semparar" style="display: none;">
+                    <div class="results-card results-card-semparar">
+                        <div class="results-header">
+                            <h3>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Dados Extraídos - Sem Parar
+                            </h3>
+                            <button class="btn-success btn-success-semparar" id="btn-download-semparar">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15V3M12 15L8 11M12 15L16 11M2 17L2.621 19.485C2.72915 19.9177 2.97882 20.3018 3.33033 20.5763C3.68184 20.8508 4.11501 20.9999 4.561 21H19.439C19.885 20.9999 20.3182 20.8508 20.6697 20.5763C21.0212 20.3018 21.2708 19.9177 21.379 19.485L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Baixar Excel
+                            </button>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table class="data-table" id="data-table-semparar">
+                                <thead>
+                                    <tr>
+                                        <th>Arquivo</th>
+                                        <th>CNPJ</th>
+                                        <th>Razão Social</th>
+                                        <th>Nº Fatura</th>
+                                        <th>Nº Nota Fiscal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-semparar">
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="results-footer">
+                            <span id="total-registros-semparar">0 registros processados</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Automação de Faturas - Ticket & Sem Parar. Júlia Neris.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.fog.min.js"></script>
+    <script>
+        // Inicializar Vanta.js
+        VANTA.FOG({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            highlightColor: 0x2980B9,
+            midtoneColor: 0x1ABC9C,
+            lowlightColor: 0xF39C12,
+            baseColor: 0x1a252f,
+            blurFactor: 0.6,
+            speed: 1.2,
+            zoom: 1
+        });
+
+        // =============================================
+        // TAB SWITCHING
+        // =============================================
+        
+        function switchTab(tab) {
+            // Atualiza nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            
+            // Atualiza conteúdo
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        // =============================================
+        // THEME TOGGLE (Modo Claro/Escuro)
+        // =============================================
+        
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light-mode');
+            
+            // Salvar preferência no localStorage
+            const isLightMode = body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+        }
+        
+        // Carregar tema salvo ao iniciar
+        (function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        })();
+
+        // =============================================
+        // TICKET - Variáveis e funções
+        // =============================================
+        
+        let dadosProcessadosTicket = [];
+        const dropZoneTicket = document.getElementById('drop-zone-ticket');
+        const fileInputTicket = document.getElementById('file-input-ticket');
+        const fileListTicket = document.getElementById('file-list-ticket');
+        const btnProcessarTicket = document.getElementById('btn-processar-ticket');
+        const uploadFormTicket = document.getElementById('upload-form-ticket');
+        const progressSectionTicket = document.getElementById('progress-section-ticket');
+        const resultsSectionTicket = document.getElementById('results-section-ticket');
+        const progressFillTicket = document.getElementById('progress-fill-ticket');
+        const progressTextTicket = document.getElementById('progress-text-ticket');
+        const tableBodyTicket = document.getElementById('table-body-ticket');
+        const btnDownloadTicket = document.getElementById('btn-download-ticket');
+        const totalRegistrosTicket = document.getElementById('total-registros-ticket');
+
+        // Drop Zone Events - Ticket
+        dropZoneTicket.addEventListener('click', () => fileInputTicket.click());
+        
+        dropZoneTicket.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZoneTicket.classList.add('dragover');
+        });
+
+        dropZoneTicket.addEventListener('dragleave', () => {
+            dropZoneTicket.classList.remove('dragover');
+        });
+
+        dropZoneTicket.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZoneTicket.classList.remove('dragover');
+            fileInputTicket.files = e.dataTransfer.files;
+            updateFileListTicket();
+        });
+
+        fileInputTicket.addEventListener('change', updateFileListTicket);
+
+        function updateFileListTicket() {
+            fileListTicket.innerHTML = '';
+            const files = fileInputTicket.files;
+            
+            if (files.length > 0) {
+                btnProcessarTicket.disabled = false;
+                
+                for (let file of files) {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 21H17C18.1046 21 19 20.1046 19 19V9L14 4H7C5.89543 4 5 4.89543 5 6V19C5 20.1046 5.89543 21 7 21Z" stroke="#2980B9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13 4V8C13 8.55228 13.4477 9 14 9H19" stroke="#2980B9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>${file.name}</span>
+                    `;
+                    fileListTicket.appendChild(fileItem);
+                }
+            } else {
+                btnProcessarTicket.disabled = true;
+            }
+        }
+
+        // Form Submit - Ticket
+        uploadFormTicket.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const files = fileInputTicket.files;
+            
+            for (let file of files) {
+                formData.append('arquivos', file);
+            }
+
+            progressSectionTicket.style.display = 'block';
+            resultsSectionTicket.style.display = 'none';
+            btnProcessarTicket.disabled = true;
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    progressFillTicket.style.width = progress + '%';
+                    progressTextTicket.textContent = Math.round(progress) + '%';
+                }
+            }, 200);
+
+            try {
+                const response = await fetch('/processar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                clearInterval(progressInterval);
+                progressFillTicket.style.width = '100%';
+                progressTextTicket.textContent = '100%';
+
+                if (result.success) {
+                    dadosProcessadosTicket = result.dados;
+                    displayResultsTicket(result.dados);
+                    
+                    setTimeout(() => {
+                        progressSectionTicket.style.display = 'none';
+                        resultsSectionTicket.style.display = 'block';
+                    }, 500);
+                } else {
+                    alert('Erro: ' + result.error);
+                    progressSectionTicket.style.display = 'none';
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert('Erro ao processar arquivos: ' + error.message);
+                progressSectionTicket.style.display = 'none';
+            }
+
+            btnProcessarTicket.disabled = false;
+        });
+
+        function displayResultsTicket(dados) {
+            tableBodyTicket.innerHTML = '';
+            
+            dados.forEach((registro, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${registro.arquivo || '-'}</td>
+                    <td>${registro.razao_social || '-'}</td>
+                    <td>${registro.nfse || '-'}</td>
+                    <td>${registro.dps_serie || '-'}</td>
+                `;
+                tableBodyTicket.appendChild(row);
+            });
+
+            totalRegistrosTicket.textContent = `${dados.length} registro(s) processado(s)`;
+        }
+
+        // Download Excel - Ticket
+        btnDownloadTicket.addEventListener('click', async () => {
+            if (dadosProcessadosTicket.length === 0) {
+                alert('Nenhum dado para exportar');
+                return;
+            }
+
+            try {
+                const response = await fetch('/gerar-excel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ dados: dadosProcessadosTicket })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    window.location.href = '/download/' + result.arquivo;
+                } else {
+                    alert('Erro ao gerar Excel: ' + result.error);
+                }
+            } catch (error) {
+                alert('Erro ao gerar Excel: ' + error.message);
+            }
+        });
+
+        // Processar Pasta Local - Ticket
+        async function processarPastaTicket() {
+            const pastaInput = document.getElementById('pasta-ticket');
+            const renomearCheckbox = document.getElementById('renomear-checkbox-ticket');
+            const btnProcessarPasta = document.getElementById('btn-processar-pasta-ticket');
+            
+            const caminhoOriginal = pastaInput.value.trim();
+            if (!caminhoOriginal) {
+                alert('Digite o caminho da pasta com os PDFs');
+                return;
+            }
+
+            // Converter separadores de caminho para o formato correto
+            const caminhoPasta = caminhoOriginal.replace(/\\/g, '/');
+            const renomear = renomearCheckbox.checked;
+
+            progressSectionTicket.style.display = 'block';
+            resultsSectionTicket.style.display = 'none';
+            btnProcessarPasta.disabled = true;
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    if (progress > 90) progress = 90;
+                    progressFillTicket.style.width = progress + '%';
+                    progressTextTicket.textContent = Math.round(progress) + '%';
+                }
+            }, 300);
+
+            try {
+                const response = await fetch('/processar-pasta-ticket', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        caminho_pasta: caminhoPasta,
+                        renomear: renomear
+                    })
+                });
+
+                const result = await response.json();
+
+                clearInterval(progressInterval);
+                progressFillTicket.style.width = '100%';
+                progressTextTicket.textContent = '100%';
+
+                if (result.success) {
+                    dadosProcessadosTicket = result.dados;
+                    displayResultsTicket(result.dados);
+                    
+                    // Mostrar mensagem de arquivos renomeados
+                    if (renomear && result.arquivos_renomeados) {
+                        const msg = result.arquivos_renomeados.length > 0 
+                            ? `${result.arquivos_renomeados.length} arquivo(s) renomeado(s) com sucesso!`
+                            : 'Nenhum arquivo precisou ser renomeado.';
+                        setTimeout(() => alert(msg), 600);
+                    }
+                    
+                    setTimeout(() => {
+                        progressSectionTicket.style.display = 'none';
+                        resultsSectionTicket.style.display = 'block';
+                    }, 500);
+                } else {
+                    alert('Erro: ' + result.error);
+                    progressSectionTicket.style.display = 'none';
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert('Erro ao processar pasta: ' + error.message);
+                progressSectionTicket.style.display = 'none';
+            }
+
+            btnProcessarPasta.disabled = false;
+        }
+
+        // =============================================
+        // SEM PARAR - Variáveis e funções
+        // =============================================
+        
+        let dadosProcessadosSemparar = [];
+        const dropZoneSemparar = document.getElementById('drop-zone-semparar');
+        const fileInputSemparar = document.getElementById('file-input-semparar');
+        const fileListSemparar = document.getElementById('file-list-semparar');
+        const btnProcessarSemparar = document.getElementById('btn-processar-semparar');
+        const uploadFormSemparar = document.getElementById('upload-form-semparar');
+        const progressSectionSemparar = document.getElementById('progress-section-semparar');
+        const resultsSectionSemparar = document.getElementById('results-section-semparar');
+        const progressFillSemparar = document.getElementById('progress-fill-semparar');
+        const progressTextSemparar = document.getElementById('progress-text-semparar');
+        const tableBodySemparar = document.getElementById('table-body-semparar');
+        const btnDownloadSemparar = document.getElementById('btn-download-semparar');
+        const totalRegistrosSemparar = document.getElementById('total-registros-semparar');
+
+        // Drop Zone Events - Sem Parar
+        dropZoneSemparar.addEventListener('click', () => fileInputSemparar.click());
+        
+        dropZoneSemparar.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZoneSemparar.classList.add('dragover');
+        });
+
+        dropZoneSemparar.addEventListener('dragleave', () => {
+            dropZoneSemparar.classList.remove('dragover');
+        });
+
+        dropZoneSemparar.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZoneSemparar.classList.remove('dragover');
+            fileInputSemparar.files = e.dataTransfer.files;
+            updateFileListSemparar();
+        });
+
+        fileInputSemparar.addEventListener('change', updateFileListSemparar);
+
+        function updateFileListSemparar() {
+            fileListSemparar.innerHTML = '';
+            const files = fileInputSemparar.files;
+            
+            if (files.length > 0) {
+                btnProcessarSemparar.disabled = false;
+                
+                for (let file of files) {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item file-item-semparar';
+                    fileItem.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 21H17C18.1046 21 19 20.1046 19 19V9L14 4H7C5.89543 4 5 4.89543 5 6V19C5 20.1046 5.89543 21 7 21Z" stroke="#27AE60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13 4V8C13 8.55228 13.4477 9 14 9H19" stroke="#27AE60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>${file.name}</span>
+                    `;
+                    fileListSemparar.appendChild(fileItem);
+                }
+            } else {
+                btnProcessarSemparar.disabled = true;
+            }
+        }
+
+        // Form Submit - Sem Parar
+        uploadFormSemparar.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const files = fileInputSemparar.files;
+            
+            for (let file of files) {
+                formData.append('arquivos', file);
+            }
+
+            progressSectionSemparar.style.display = 'block';
+            resultsSectionSemparar.style.display = 'none';
+            btnProcessarSemparar.disabled = true;
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    progressFillSemparar.style.width = progress + '%';
+                    progressTextSemparar.textContent = Math.round(progress) + '%';
+                }
+            }, 200);
+
+            try {
+                const response = await fetch('/processar-semparar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                clearInterval(progressInterval);
+                progressFillSemparar.style.width = '100%';
+                progressTextSemparar.textContent = '100%';
+
+                if (result.success) {
+                    dadosProcessadosSemparar = result.dados;
+                    displayResultsSemparar(result.dados);
+                    
+                    setTimeout(() => {
+                        progressSectionSemparar.style.display = 'none';
+                        resultsSectionSemparar.style.display = 'block';
+                    }, 500);
+                } else {
+                    alert('Erro: ' + result.error);
+                    progressSectionSemparar.style.display = 'none';
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert('Erro ao processar arquivos: ' + error.message);
+                progressSectionSemparar.style.display = 'none';
+            }
+
+            btnProcessarSemparar.disabled = false;
+        });
+
+        function displayResultsSemparar(dados) {
+            tableBodySemparar.innerHTML = '';
+            
+            dados.forEach((registro, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${registro.arquivo || '-'}</td>
+                    <td>${registro.cnpj || '-'}</td>
+                    <td>${registro.razao_social || '-'}</td>
+                    <td>${registro.numero_fatura || '-'}</td>
+                    <td>${registro.numero_nota_fiscal || '-'}</td>
+                `;
+                tableBodySemparar.appendChild(row);
+            });
+
+            totalRegistrosSemparar.textContent = `${dados.length} registro(s) processado(s)`;
+        }
+
+        // Download Excel - Sem Parar
+        btnDownloadSemparar.addEventListener('click', async () => {
+            if (dadosProcessadosSemparar.length === 0) {
+                alert('Nenhum dado para exportar');
+                return;
+            }
+
+            try {
+                const response = await fetch('/gerar-excel-semparar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ dados: dadosProcessadosSemparar })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    window.location.href = '/download/' + result.arquivo;
+                } else {
+                    alert('Erro ao gerar Excel: ' + result.error);
+                }
+            } catch (error) {
+                alert('Erro ao gerar Excel: ' + error.message);
+            }
+        });
+
+        // Processar Pasta Local - Sem Parar
+        async function processarPastaSemparar() {
+            const pastaInput = document.getElementById('pasta-semparar');
+            const renomearCheckbox = document.getElementById('renomear-checkbox');
+            const btnProcessarPasta = document.getElementById('btn-processar-pasta');
+            
+            const caminhoOriginal = pastaInput.value.trim();
+            if (!caminhoOriginal) {
+                alert('Digite o caminho da pasta com os PDFs');
+                return;
+            }
+
+            // Converter separadores de caminho para o formato correto
+            const caminhoPasta = caminhoOriginal.replace(/\\/g, '/');
+            const renomear = renomearCheckbox.checked;
+
+            progressSectionSemparar.style.display = 'block';
+            resultsSectionSemparar.style.display = 'none';
+            btnProcessarPasta.disabled = true;
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    if (progress > 90) progress = 90;
+                    progressFillSemparar.style.width = progress + '%';
+                    progressTextSemparar.textContent = Math.round(progress) + '%';
+                }
+            }, 300);
+
+            try {
+                const response = await fetch('/processar-pasta-semparar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        caminho_pasta: caminhoPasta,
+                        renomear: renomear
+                    })
+                });
+
+                const result = await response.json();
+
+                clearInterval(progressInterval);
+                progressFillSemparar.style.width = '100%';
+                progressTextSemparar.textContent = '100%';
+
+                if (result.success) {
+                    dadosProcessadosSemparar = result.dados;
+                    displayResultsSemparar(result.dados);
+                    
+                    // Mostrar mensagem de arquivos renomeados
+                    if (renomear && result.arquivos_renomeados) {
+                        const msg = result.arquivos_renomeados.length > 0 
+                            ? `${result.arquivos_renomeados.length} arquivo(s) renomeado(s) com sucesso!`
+                            : 'Nenhum arquivo precisou ser renomeado.';
+                        setTimeout(() => alert(msg), 600);
+                    }
+                    
+                    setTimeout(() => {
+                        progressSectionSemparar.style.display = 'none';
+                        resultsSectionSemparar.style.display = 'block';
+                    }, 500);
+                } else {
+                    alert('Erro: ' + result.error);
+                    progressSectionSemparar.style.display = 'none';
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert('Erro ao processar pasta: ' + error.message);
+                progressSectionSemparar.style.display = 'none';
+            }
+
+            btnProcessarPasta.disabled = false;
+        }
+    </script>
+</body>
+</html>

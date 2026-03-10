@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Build
+build/
+dist/
+*.spec
+*.manifest
+*.exe
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads e outputs temporários
+uploads/
+outputs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
