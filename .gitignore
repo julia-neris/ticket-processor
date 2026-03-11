@@ -39,3 +39,8 @@ Thumbs.db
 # Local test files
 test_*.py
 resultado.xlsx
+
+# Development files (Streamlit/Tkinter)
+dev/
+app.py
+ticket.py
