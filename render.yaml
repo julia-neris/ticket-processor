@@ -3,7 +3,7 @@ services:
     name: ticket-processor
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-level info
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-level info --access-logfile - --error-logfile - wsgi:application
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
