@@ -378,57 +378,57 @@ def processar_semparar():
                 try:
                     resultado = extrair_dados_pdf_semparar(caminho)
                     logger.info(f"Dados extraídos: {resultado}")
-                
-                # Renomear arquivo com razão social
-                if resultado.get('razao_social') and resultado['razao_social'] != '':
-                    razao_social = sanitizar_nome_arquivo(resultado['razao_social'])
-                    nome_base, extensao = os.path.splitext(filename)
                     
-                    # Verificar se já tem a razão social no nome
-                    if razao_social.lower() not in nome_base.lower():
-                        novo_nome = f"{nome_base}_{razao_social}{extensao}"
-                        novo_caminho = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
+                    # Renomear arquivo com razão social
+                    if resultado.get('razao_social') and resultado['razao_social'] != '':
+                        razao_social = sanitizar_nome_arquivo(resultado['razao_social'])
+                        nome_base, extensao = os.path.splitext(filename)
                         
-                        # Evitar sobrescrever arquivo existente
-                        contador = 1
-                        while os.path.exists(novo_caminho):
-                            novo_nome = f"{nome_base}_{razao_social}_{contador}{extensao}"
+                        # Verificar se já tem a razão social no nome
+                        if razao_social.lower() not in nome_base.lower():
+                            novo_nome = f"{nome_base}_{razao_social}{extensao}"
                             novo_caminho = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
-                            contador += 1
-                        
-                        os.rename(caminho, novo_caminho)
-                        arquivos_renomeados.append({
-                            'original': filename,
-                            'novo': novo_nome
-                        })
-                        resultado['arquivo'] = novo_nome
-                        resultado['arquivo_renomeado'] = True
+                            
+                            # Evitar sobrescrever arquivo existente
+                            contador = 1
+                            while os.path.exists(novo_caminho):
+                                novo_nome = f"{nome_base}_{razao_social}_{contador}{extensao}"
+                                novo_caminho = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
+                                contador += 1
+                            
+                            os.rename(caminho, novo_caminho)
+                            arquivos_renomeados.append({
+                                'original': filename,
+                                'novo': novo_nome
+                            })
+                            resultado['arquivo'] = novo_nome
+                            resultado['arquivo_renomeado'] = True
+                        else:
+                            resultado['arquivo'] = filename
+                            resultado['arquivo_renomeado'] = False
                     else:
                         resultado['arquivo'] = filename
                         resultado['arquivo_renomeado'] = False
-                else:
-                    resultado['arquivo'] = filename
-                    resultado['arquivo_renomeado'] = False
-                    
-                dados.append(resultado)
-            except Exception as e:
-                logger.error(f"Erro ao processar {filename}: {str(e)}")
-                dados.append({
-                    'arquivo': filename,
-                    'cnpj': f'Erro: {str(e)}',
-                    'cnpj_normalizado': '',
-                    'numero_fatura': '',
-                    'numero_nota_fiscal': '',
-                    'razao_social': '',
-                    'arquivo_renomeado': False
-                })
-            finally:
-                # Limpar arquivo original se não foi renomeado (economia de memória)
-                if os.path.exists(caminho) and not any(d.get('arquivo') == filename for d in dados):
-                    try:
-                        os.remove(caminho)
-                    except:
-                        pass
+                        
+                    dados.append(resultado)
+                except Exception as e:
+                    logger.error(f"Erro ao processar {filename}: {str(e)}")
+                    dados.append({
+                        'arquivo': filename,
+                        'cnpj': f'Erro: {str(e)}',
+                        'cnpj_normalizado': '',
+                        'numero_fatura': '',
+                        'numero_nota_fiscal': '',
+                        'razao_social': '',
+                        'arquivo_renomeado': False
+                    })
+                finally:
+                    # Limpar arquivo original se não foi renomeado (economia de memória)
+                    if os.path.exists(caminho) and not any(d.get('arquivo') == filename for d in dados):
+                        try:
+                            os.remove(caminho)
+                        except:
+                            pass
 
         return jsonify({
             'success': True,
