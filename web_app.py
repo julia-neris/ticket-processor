@@ -3,6 +3,8 @@ import re
 import uuid
 import pdfplumber
 import logging
+import zipfile
+from io import BytesIO
 from flask import Flask, render_template, request, jsonify, send_file
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
@@ -176,6 +178,7 @@ def processar():
         return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
 
     dados = []
+    arquivos_renomeados = []
     total = len(arquivos)
 
     for idx, arquivo in enumerate(arquivos):
@@ -186,24 +189,53 @@ def processar():
 
             try:
                 resultado = extrair_dados_pdf_ticket(caminho)
-                resultado['arquivo'] = filename
+                
+                # Renomear arquivo com razão social
+                if resultado.get('razao_social') and resultado['razao_social'] != '':
+                    razao_social = sanitizar_nome_arquivo(resultado['razao_social'])
+                    nome_base, extensao = os.path.splitext(filename)
+                    
+                    # Verificar se já tem a razão social no nome
+                    if razao_social.lower() not in nome_base.lower():
+                        novo_nome = f"{nome_base}_{razao_social}{extensao}"
+                        novo_caminho = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
+                        
+                        # Evitar sobrescrever arquivo existente
+                        contador = 1
+                        while os.path.exists(novo_caminho):
+                            novo_nome = f"{nome_base}_{razao_social}_{contador}{extensao}"
+                            novo_caminho = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
+                            contador += 1
+                        
+                        os.rename(caminho, novo_caminho)
+                        arquivos_renomeados.append({
+                            'original': filename,
+                            'novo': novo_nome
+                        })
+                        resultado['arquivo'] = novo_nome
+                        resultado['arquivo_renomeado'] = True
+                    else:
+                        resultado['arquivo'] = filename
+                        resultado['arquivo_renomeado'] = False
+                else:
+                    resultado['arquivo'] = filename
+                    resultado['arquivo_renomeado'] = False
+                    
                 dados.append(resultado)
             except Exception as e:
                 dados.append({
                     'arquivo': filename,
                     'razao_social': f'Erro: {str(e)}',
                     'nfse': '',
-                    'dps_serie': ''
+                    'dps_serie': '',
+                    'arquivo_renomeado': False
                 })
-            finally:
-                # Limpar arquivo após processamento
-                if os.path.exists(caminho):
-                    os.remove(caminho)
 
     return jsonify({
         'success': True,
         'dados': dados,
-        'total': len(dados)
+        'total': len(dados),
+        'arquivos_renomeados': arquivos_renomeados
     })
 
 # Rota desabilitada: não funciona quando deployado na nuvem
@@ -306,6 +338,7 @@ def processar_semparar():
         return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
 
     dados = []
+    arquivos_renomeados = []
 
     for idx, arquivo in enumerate(arquivos):
         if arquivo and arquivo.filename.lower().endswith('.pdf'):
@@ -315,7 +348,38 @@ def processar_semparar():
 
             try:
                 resultado = extrair_dados_pdf_semparar(caminho)
-                resultado['arquivo'] = filename
+                
+                # Renomear arquivo com razão social
+                if resultado.get('razao_social') and resultado['razao_social'] != '':
+                    razao_social = sanitizar_nome_arquivo(resultado['razao_social'])
+                    nome_base, extensao = os.path.splitext(filename)
+                    
+                    # Verificar se já tem a razão social no nome
+                    if razao_social.lower() not in nome_base.lower():
+                        novo_nome = f"{nome_base}_{razao_social}{extensao}"
+                        novo_caminho = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
+                        
+                        # Evitar sobrescrever arquivo existente
+                        contador = 1
+                        while os.path.exists(novo_caminho):
+                            novo_nome = f"{nome_base}_{razao_social}_{contador}{extensao}"
+                            novo_caminho = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
+                            contador += 1
+                        
+                        os.rename(caminho, novo_caminho)
+                        arquivos_renomeados.append({
+                            'original': filename,
+                            'novo': novo_nome
+                        })
+                        resultado['arquivo'] = novo_nome
+                        resultado['arquivo_renomeado'] = True
+                    else:
+                        resultado['arquivo'] = filename
+                        resultado['arquivo_renomeado'] = False
+                else:
+                    resultado['arquivo'] = filename
+                    resultado['arquivo_renomeado'] = False
+                    
                 dados.append(resultado)
             except Exception as e:
                 dados.append({
@@ -324,16 +388,15 @@ def processar_semparar():
                     'cnpj_normalizado': '',
                     'numero_fatura': '',
                     'numero_nota_fiscal': '',
-                    'razao_social': ''
+                    'razao_social': '',
+                    'arquivo_renomeado': False
                 })
-            finally:
-                if os.path.exists(caminho):
-                    os.remove(caminho)
 
     return jsonify({
         'success': True,
         'dados': dados,
-        'total': len(dados)
+        'total': len(dados),
+        'arquivos_renomeados': arquivos_renomeados
     })
 
 
@@ -550,6 +613,37 @@ def download(nome_arquivo):
             download_name=nome_arquivo
         )
     return jsonify({'error': 'Arquivo não encontrado'}), 404
+
+
+@app.route('/download-pdfs-renomeados', methods=['POST'])
+def download_pdfs_renomeados():
+    """Baixa os PDFs renomeados em um arquivo ZIP."""
+    try:
+        data = request.json
+        arquivos = data.get('arquivos', [])
+        
+        if not arquivos:
+            return jsonify({'error': 'Nenhum arquivo para download'}), 400
+        
+        # Criar arquivo ZIP em memória
+        memory_file = BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for arquivo in arquivos:
+                caminho = os.path.join(app.config['UPLOAD_FOLDER'], arquivo)
+                if os.path.exists(caminho):
+                    zf.write(caminho, arquivo)
+        
+        memory_file.seek(0)
+        
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'arquivos_renomeados_{uuid.uuid4().hex[:8]}.zip'
+        )
+    except Exception as e:
+        logger.error(f"Erro ao criar ZIP: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
