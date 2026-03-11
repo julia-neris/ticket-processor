@@ -76,6 +76,21 @@
                         <p>Extrai Razão Social, NFS-e e DPS/Série dos PDFs de faturas Ticket</p>
                         
                         <form id="upload-form-ticket" enctype="multipart/form-data">
+                            <!-- Opção: Selecionar Pasta -->
+                            <div class="folder-selector">
+                                <label for="folder-input-ticket" class="btn-secondary">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Selecionar Pasta com PDFs
+                                </label>
+                                <input type="file" id="folder-input-ticket" webkitdirectory directory multiple accept=".pdf" hidden>
+                            </div>
+
+                            <div class="divider divider-ticket">
+                                <span>ou</span>
+                            </div>
+
                             <div class="drop-zone" id="drop-zone-ticket">
                                 <input type="file" id="file-input-ticket" name="arquivos" multiple accept=".pdf" hidden>
                                 <span class="drop-zone-text">Clique ou arraste os PDFs aqui</span>
@@ -160,6 +175,21 @@
                         <p>Extrai CNPJ, Fatura, Nota Fiscal e Razão Social dos PDFs de pedágio</p>
                         
                         <form id="upload-form-semparar" enctype="multipart/form-data">
+                            <!-- Opção: Selecionar Pasta -->
+                            <div class="folder-selector">
+                                <label for="folder-input-semparar" class="btn-secondary btn-semparar">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Selecionar Pasta com PDFs
+                                </label>
+                                <input type="file" id="folder-input-semparar" webkitdirectory directory multiple accept=".pdf" hidden>
+                            </div>
+
+                            <div class="divider">
+                                <span>ou</span>
+                            </div>
+
                             <div class="drop-zone drop-zone-semparar" id="drop-zone-semparar">
                                 <input type="file" id="file-input-semparar" name="arquivos" multiple accept=".pdf" hidden>
                                 <span class="drop-zone-text">Clique ou arraste os PDFs aqui</span>
@@ -335,6 +365,14 @@
         });
 
         fileInputTicket.addEventListener('change', updateFileListTicket);
+
+        // Folder Selector - Ticket
+        const folderInputTicket = document.getElementById('folder-input-ticket');
+        folderInputTicket.addEventListener('change', () => {
+            // Copiar arquivos do seletor de pasta para o input de arquivos
+            fileInputTicket.files = folderInputTicket.files;
+            updateFileListTicket();
+        });
 
         function updateFileListTicket() {
             fileListTicket.innerHTML = '';
@@ -581,6 +619,14 @@
         });
 
         fileInputSemparar.addEventListener('change', updateFileListSemparar);
+
+        // Folder Selector - Sem Parar
+        const folderInputSemparar = document.getElementById('folder-input-semparar');
+        folderInputSemparar.addEventListener('change', () => {
+            // Copiar arquivos do seletor de pasta para o input de arquivos
+            fileInputSemparar.files = folderInputSemparar.files;
+            updateFileListSemparar();
+        });
 
         function updateFileListSemparar() {
             fileListSemparar.innerHTML = '';

@@ -202,6 +202,43 @@ body {
     box-shadow: 0 10px 30px rgba(8, 0, 116, 0.4);
 }
 
+/* Folder Selector */
+.folder-selector {
+    margin-bottom: 1.5rem;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    color: white;
+    border: 2px dashed rgba(41, 128, 185, 0.5);
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(41, 128, 185, 0.3);
+    border-color: rgba(41, 128, 185, 0.8);
+    background: linear-gradient(135deg, #3d566e, #34495e);
+}
+
+.divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
 /* Progress Section */
 .progress-section {
     margin-bottom: 2rem;
@@ -672,6 +709,21 @@ body.light-mode .btn-primary {
 
 body.light-mode .btn-success {
     box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+}
+
+body.light-mode .btn-secondary {
+    background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+    color: #2c3e50;
+    border: 2px dashed rgba(52, 152, 219, 0.4);
+}
+
+body.light-mode .btn-secondary:hover {
+    background: linear-gradient(135deg, #d5dbdd, #a8b0b5);
+    border-color: #3498db;
+}
+
+body.light-mode .divider {
+    color: rgba(44, 62, 80, 0.5);
 }
 
 body.light-mode .progress-card {
