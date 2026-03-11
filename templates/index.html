@@ -75,31 +75,6 @@
                         <h2>Faturas Ticket </h2>
                         <p>Extrai Razão Social, NFS-e e DPS/Série dos PDFs de faturas Ticket</p>
                         
-                        <!-- Opção: Pasta Local -->
-                        <div class="folder-input-section folder-ticket">
-                            <label for="pasta-ticket" class="folder-label">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Caminho da Pasta com PDFs:
-                            </label>
-                            <input type="text" id="pasta-ticket" class="folder-input folder-input-ticket" placeholder="Ex: C:\Users\Faturas\Ticket">
-                            <div class="checkbox-container">
-                                <input type="checkbox" id="renomear-checkbox-ticket" checked>
-                                <label for="renomear-checkbox-ticket">Renomear arquivos com Razão Social</label>
-                            </div>
-                            <button type="button" class="btn-primary" id="btn-processar-pasta-ticket" onclick="processarPastaTicket()">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Processar Pasta
-                            </button>
-                        </div>
-
-                        <div class="divider divider-ticket">
-                            <span>ou faça upload manual</span>
-                        </div>
-                        
                         <form id="upload-form-ticket" enctype="multipart/form-data">
                             <div class="drop-zone" id="drop-zone-ticket">
                                 <input type="file" id="file-input-ticket" name="arquivos" multiple accept=".pdf" hidden>
@@ -183,31 +158,6 @@
                         </div>
                         <h2>Faturas Sem Parar - Pedágio</h2>
                         <p>Extrai CNPJ, Fatura, Nota Fiscal e Razão Social dos PDFs de pedágio</p>
-                        
-                        <!-- Opção: Pasta Local -->
-                        <div class="folder-input-section">
-                            <label for="pasta-semparar" class="folder-label">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Caminho da Pasta com PDFs:
-                            </label>
-                            <input type="text" id="pasta-semparar" class="folder-input" placeholder="Ex: C:\Users\Faturas\SemParar">
-                            <div class="checkbox-container">
-                                <input type="checkbox" id="renomear-checkbox" checked>
-                                <label for="renomear-checkbox">Renomear arquivos com Razão Social</label>
-                            </div>
-                            <button type="button" class="btn-primary btn-semparar" id="btn-processar-pasta" onclick="processarPastaSemparar()">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M22 19C22 20.1046 21.1046 21 20 21H4C2.89543 21 2 20.1046 2 19V5C2 3.89543 2.89543 3 4 3H9L11 6H20C21.1046 6 22 6.89543 22 8V19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Processar Pasta
-                            </button>
-                        </div>
-
-                        <div class="divider">
-                            <span>ou faça upload manual</span>
-                        </div>
                         
                         <form id="upload-form-semparar" enctype="multipart/form-data">
                             <div class="drop-zone drop-zone-semparar" id="drop-zone-semparar">
@@ -514,6 +464,8 @@
         });
 
         // Processar Pasta Local - Ticket
+        // Função desabilitada: não funciona quando deployado na nuvem
+        /*
         async function processarPastaTicket() {
             const pastaInput = document.getElementById('pasta-ticket');
             const renomearCheckbox = document.getElementById('renomear-checkbox-ticket');
@@ -589,6 +541,7 @@
 
             btnProcessarPasta.disabled = false;
         }
+        */
 
         // =============================================
         // SEM PARAR - Variáveis e funções
@@ -758,6 +711,8 @@
         });
 
         // Processar Pasta Local - Sem Parar
+        // Função desabilitada: não funciona quando deployado na nuvem
+        /*
         async function processarPastaSemparar() {
             const pastaInput = document.getElementById('pasta-semparar');
             const renomearCheckbox = document.getElementById('renomear-checkbox');
@@ -833,6 +788,7 @@
 
             btnProcessarPasta.disabled = false;
         }
+        */
     </script>
 </body>
 </html>

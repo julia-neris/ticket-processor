@@ -206,7 +206,9 @@ def processar():
         'total': len(dados)
     })
 
-
+# Rota desabilitada: não funciona quando deployado na nuvem
+# O navegador não pode acessar sistema de arquivos local do usuário
+'''
 @app.route('/processar-pasta-ticket', methods=['POST'])
 def processar_pasta_ticket():
     """Processa PDFs do Ticket de uma pasta local e renomeia os arquivos."""
@@ -289,6 +291,7 @@ def processar_pasta_ticket():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+'''
 
 
 @app.route('/processar-semparar', methods=['POST'])
@@ -346,6 +349,9 @@ def sanitizar_nome_arquivo(nome):
     return nome_limpo
 
 
+# Rota desabilitada: não funciona quando deployado na nuvem
+# O navegador não pode acessar sistema de arquivos local do usuário
+'''
 @app.route('/processar-pasta-semparar', methods=['POST'])
 def processar_pasta_semparar():
     """Processa PDFs do Sem Parar de uma pasta local e renomeia os arquivos."""
@@ -430,6 +436,7 @@ def processar_pasta_semparar():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+'''
 
 
 @app.route('/gerar-excel', methods=['POST'])
