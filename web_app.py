@@ -2,18 +2,27 @@ import os
 import re
 import uuid
 import pdfplumber
+import logging
 from flask import Flask, render_template, request, jsonify, send_file
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from werkzeug.utils import secure_filename
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max
 
 # Criar pasta de uploads se não existir
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs('outputs', exist_ok=True)
+try:
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs('outputs', exist_ok=True)
+    logger.info("Pastas criadas com sucesso")
+except Exception as e:
+    logger.error(f"Erro ao criar pastas: {e}")
 
 
 # =============================================================================
@@ -143,6 +152,16 @@ def extrair_dados_pdf_semparar(caminho_pdf):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'uploads_folder': os.path.exists(app.config['UPLOAD_FOLDER']),
+        'outputs_folder': os.path.exists('outputs')
+    })
 
 
 @app.route('/processar', methods=['POST'])
