@@ -183,7 +183,9 @@ def processar():
 
     for idx, arquivo in enumerate(arquivos):
         if arquivo and arquivo.filename.lower().endswith('.pdf'):
-            filename = secure_filename(arquivo.filename)
+            # Pegar apenas o nome do arquivo, sem o caminho da pasta
+            filename_original = os.path.basename(arquivo.filename)
+            filename = secure_filename(filename_original)
             caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             arquivo.save(caminho)
 
@@ -342,7 +344,9 @@ def processar_semparar():
 
     for idx, arquivo in enumerate(arquivos):
         if arquivo and arquivo.filename.lower().endswith('.pdf'):
-            filename = secure_filename(arquivo.filename)
+            # Pegar apenas o nome do arquivo, sem o caminho da pasta
+            filename_original = os.path.basename(arquivo.filename)
+            filename = secure_filename(filename_original)
             caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             arquivo.save(caminho)
 
