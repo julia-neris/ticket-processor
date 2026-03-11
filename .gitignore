@@ -7,6 +7,7 @@ __pycache__/
 .venv/
 venv/
 ENV/
+env/
 
 # Build
 build/
@@ -22,6 +23,8 @@ dist/
 # Uploads e outputs temporários
 uploads/
 outputs/
+*.xlsx
+*.pdf
 
 # OS
 .DS_Store
@@ -29,3 +32,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Render
+.render/
+
+# Local test files
+test_*.py
+resultado.xlsx
