@@ -37,43 +37,49 @@ def extrair_dados_pdf_ticket(caminho_pdf):
     dps_serie = ""
     nfse = ""
 
-    with pdfplumber.open(caminho_pdf) as pdf:
-        texto = ""
-        for pagina in pdf.pages:
-            conteudo = pagina.extract_text()
-            if conteudo:
-                texto += conteudo
+    try:
+        with pdfplumber.open(caminho_pdf) as pdf:
+            texto = ""
+            # Processar apenas as primeiras 3 páginas para economia de memória
+            max_pages = min(3, len(pdf.pages))
+            for i in range(max_pages):
+                conteudo = pdf.pages[i].extract_text()
+                if conteudo:
+                    texto += conteudo
 
-        # RAZAO SOCIAL (Tomador - segunda ocorrência)
-        matches_razao = re.findall(r"Nome/Razão Social:\s*(.+)", texto)
-        if len(matches_razao) >= 2:
-            razao_social = matches_razao[1].strip()
-        elif len(matches_razao) == 1:
-            razao_social = matches_razao[0].strip()
+            # RAZAO SOCIAL (Tomador - segunda ocorrência)
+            matches_razao = re.findall(r"Nome/Razão Social:\s*(.+)", texto)
+            if len(matches_razao) >= 2:
+                razao_social = matches_razao[1].strip()
+            elif len(matches_razao) == 1:
+                razao_social = matches_razao[0].strip()
 
-        # NFS-e e DPS / SERIE
-        linhas = texto.split('\n')
+            # NFS-e e DPS / SERIE
+            linhas = texto.split('\n')
 
-        for i, linha in enumerate(linhas):
-            # NFS-e Nacional
-            if "Número NFS-e Nacional" in linha:
-                for j in range(1, 4):
-                    if i + j < len(linhas):
-                        proxima = linhas[i + j].strip()
-                        match_nfse = re.search(r"(\d{6,})", proxima)
-                        if match_nfse:
-                            nfse = match_nfse.group(1)
-                            break
+            for i, linha in enumerate(linhas):
+                # NFS-e Nacional
+                if "Número NFS-e Nacional" in linha:
+                    for j in range(1, 4):
+                        if i + j < len(linhas):
+                            proxima = linhas[i + j].strip()
+                            match_nfse = re.search(r"(\d{6,})", proxima)
+                            if match_nfse:
+                                nfse = match_nfse.group(1)
+                                break
 
-            # DPS / Série
-            if "Número DPS" in linha and "Série DPS" in linha:
-                for j in range(1, 6):
-                    if i + j < len(linhas):
-                        proxima = linhas[i + j].strip()
-                        match_dps = re.search(r"(\d+)\s*/\s*([A-Za-z0-9]+)", proxima)
-                        if match_dps:
-                            dps_serie = f"{match_dps.group(1)} / {match_dps.group(2)}"
-                            break
+                # DPS / Série
+                if "Número DPS" in linha and "Série DPS" in linha:
+                    for j in range(1, 6):
+                        if i + j < len(linhas):
+                            proxima = linhas[i + j].strip()
+                            match_dps = re.search(r"(\d+)\s*/\s*([A-Za-z0-9]+)", proxima)
+                            if match_dps:
+                                dps_serie = f"{match_dps.group(1)} / {match_dps.group(2)}"
+                                break
+    except Exception as e:
+        logger.error(f"Erro ao extrair dados do PDF: {e}")
+        raise
 
     return {
         "razao_social": razao_social,
@@ -101,42 +107,48 @@ def extrair_dados_pdf_semparar(caminho_pdf):
     numero_nota_fiscal = ""
     razao_social = ""
 
-    with pdfplumber.open(caminho_pdf) as pdf:
-        texto = ""
-        for pagina in pdf.pages:
-            conteudo = pagina.extract_text()
-            if conteudo:
-                texto += conteudo + "\n"
+    try:
+        with pdfplumber.open(caminho_pdf) as pdf:
+            texto = ""
+            # Processar apenas as primeiras 2 páginas para economia de memória
+            max_pages = min(2, len(pdf.pages))
+            for i in range(max_pages):
+                conteudo = pdf.pages[i].extract_text()
+                if conteudo:
+                    texto += conteudo + "\n"
 
-        if not texto.strip():
-            return {
-                "cnpj": "",
-                "cnpj_normalizado": "",
-                "numero_fatura": "",
-                "numero_nota_fiscal": "",
-                "razao_social": ""
-            }
+            if not texto.strip():
+                return {
+                    "cnpj": "",
+                    "cnpj_normalizado": "",
+                    "numero_fatura": "",
+                    "numero_nota_fiscal": "",
+                    "razao_social": ""
+                }
 
-        # Extração do CNPJ
-        match_cnpj = re.search(r'CNPJ:\s*([\d\.\-/]+)', texto)
-        if match_cnpj:
-            cnpj = match_cnpj.group(1).strip()
-            cnpj_normalizado = normalizar_cnpj(cnpj)
+            # Extração do CNPJ
+            match_cnpj = re.search(r'CNPJ:\s*([\d\.\-/]+)', texto)
+            if match_cnpj:
+                cnpj = match_cnpj.group(1).strip()
+                cnpj_normalizado = normalizar_cnpj(cnpj)
 
-        # Extração do Número da Fatura
-        match_fatura = re.search(r'N[ºo°]\s*da\s*Fatura:\s*(\d+)', texto, re.IGNORECASE)
-        if match_fatura:
-            numero_fatura = match_fatura.group(1).strip()
+            # Extração do Número da Fatura
+            match_fatura = re.search(r'N[ºo°]\s*da\s*Fatura:\s*(\d+)', texto, re.IGNORECASE)
+            if match_fatura:
+                numero_fatura = match_fatura.group(1).strip()
 
-        # Extração do Número da Nota Fiscal
-        match_nf = re.search(r'N[ºo°]\s*da\s*Nota\s*Fiscal:\s*(\d+)', texto, re.IGNORECASE)
-        if match_nf:
-            numero_nota_fiscal = match_nf.group(1).strip()
+            # Extração do Número da Nota Fiscal
+            match_nf = re.search(r'N[ºo°]\s*da\s*Nota\s*Fiscal:\s*(\d+)', texto, re.IGNORECASE)
+            if match_nf:
+                numero_nota_fiscal = match_nf.group(1).strip()
 
-        # Extração da Razão Social (Nome)
-        match_nome = re.search(r'Nome:\s*(.+?)(?:\n|$)', texto)
-        if match_nome:
-            razao_social = match_nome.group(1).strip()
+            # Extração da Razão Social (Nome)
+            match_nome = re.search(r'Nome:\s*(.+?)(?:\n|$)', texto)
+            if match_nome:
+                razao_social = match_nome.group(1).strip()
+    except Exception as e:
+        logger.error(f"Erro ao extrair dados do PDF Sem Parar: {e}")
+        raise
 
     return {
         "cnpj": cnpj,
@@ -225,6 +237,7 @@ def processar():
                     
                 dados.append(resultado)
             except Exception as e:
+                logger.error(f"Erro ao processar {filename}: {str(e)}")
                 dados.append({
                     'arquivo': filename,
                     'razao_social': f'Erro: {str(e)}',
@@ -232,6 +245,13 @@ def processar():
                     'dps_serie': '',
                     'arquivo_renomeado': False
                 })
+            finally:
+                # Limpar arquivo original se não foi renomeado (economia de memória)
+                if os.path.exists(caminho) and not any(d.get('arquivo') == filename for d in dados):
+                    try:
+                        os.remove(caminho)
+                    except:
+                        pass
 
     return jsonify({
         'success': True,
@@ -331,27 +351,33 @@ def processar_pasta_ticket():
 @app.route('/processar-semparar', methods=['POST'])
 def processar_semparar():
     """Processa PDFs do Sem Parar."""
-    if 'arquivos' not in request.files:
-        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    try:
+        if 'arquivos' not in request.files:
+            return jsonify({'error': 'Nenhum arquivo enviado'}), 400
 
-    arquivos = request.files.getlist('arquivos')
-    
-    if not arquivos or arquivos[0].filename == '':
-        return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
+        arquivos = request.files.getlist('arquivos')
+        
+        if not arquivos or arquivos[0].filename == '':
+            return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
 
-    dados = []
-    arquivos_renomeados = []
+        dados = []
+        arquivos_renomeados = []
+        
+        logger.info(f"Processando {len(arquivos)} arquivo(s) Sem Parar")
 
-    for idx, arquivo in enumerate(arquivos):
-        if arquivo and arquivo.filename.lower().endswith('.pdf'):
-            # Pegar apenas o nome do arquivo, sem o caminho da pasta
-            filename_original = os.path.basename(arquivo.filename)
-            filename = secure_filename(filename_original)
-            caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            arquivo.save(caminho)
+        for idx, arquivo in enumerate(arquivos):
+            if arquivo and arquivo.filename.lower().endswith('.pdf'):
+                # Pegar apenas o nome do arquivo, sem o caminho da pasta
+                filename_original = os.path.basename(arquivo.filename)
+                filename = secure_filename(filename_original)
+                caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                
+                logger.info(f"Salvando arquivo: {filename}")
+                arquivo.save(caminho)
 
-            try:
-                resultado = extrair_dados_pdf_semparar(caminho)
+                try:
+                    resultado = extrair_dados_pdf_semparar(caminho)
+                    logger.info(f"Dados extraídos: {resultado}")
                 
                 # Renomear arquivo com razão social
                 if resultado.get('razao_social') and resultado['razao_social'] != '':
@@ -386,6 +412,7 @@ def processar_semparar():
                     
                 dados.append(resultado)
             except Exception as e:
+                logger.error(f"Erro ao processar {filename}: {str(e)}")
                 dados.append({
                     'arquivo': filename,
                     'cnpj': f'Erro: {str(e)}',
@@ -395,13 +422,24 @@ def processar_semparar():
                     'razao_social': '',
                     'arquivo_renomeado': False
                 })
+            finally:
+                # Limpar arquivo original se não foi renomeado (economia de memória)
+                if os.path.exists(caminho) and not any(d.get('arquivo') == filename for d in dados):
+                    try:
+                        os.remove(caminho)
+                    except:
+                        pass
 
-    return jsonify({
-        'success': True,
-        'dados': dados,
-        'total': len(dados),
-        'arquivos_renomeados': arquivos_renomeados
-    })
+        return jsonify({
+            'success': True,
+            'dados': dados,
+            'total': len(dados),
+            'arquivos_renomeados': arquivos_renomeados
+        })
+    
+    except Exception as e:
+        logger.error(f"Erro geral ao processar Sem Parar: {str(e)}")
+        return jsonify({'error': f'Erro ao processar: {str(e)}'}), 500
 
 
 def sanitizar_nome_arquivo(nome):
