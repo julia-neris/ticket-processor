@@ -1,6 +1,8 @@
 import os
 import re
+import gc
 import uuid
+import time
 import pdfplumber
 import logging
 import zipfile
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
 # Criar pasta de uploads se não existir
 try:
@@ -25,6 +27,26 @@ try:
     logger.info("Pastas criadas com sucesso")
 except Exception as e:
     logger.error(f"Erro ao criar pastas: {e}")
+
+
+def _cleanup_old_files():
+    """Remove arquivos temporários com mais de 1 hora."""
+    try:
+        now = time.time()
+        for folder in [app.config['UPLOAD_FOLDER'], 'outputs']:
+            if os.path.exists(folder):
+                for f in os.listdir(folder):
+                    fpath = os.path.join(folder, f)
+                    if os.path.isfile(fpath) and (now - os.path.getmtime(fpath)) > 3600:
+                        try:
+                            os.remove(fpath)
+                        except Exception:
+                            pass
+    except Exception as e:
+        logger.warning(f"Erro ao limpar arquivos antigos: {e}")
+
+
+_cleanup_old_files()
 
 
 # =============================================================================
@@ -43,9 +65,11 @@ def extrair_dados_pdf_ticket(caminho_pdf):
             # Processar apenas as primeiras 3 páginas para economia de memória
             max_pages = min(3, len(pdf.pages))
             for i in range(max_pages):
-                conteudo = pdf.pages[i].extract_text()
+                page = pdf.pages[i]
+                conteudo = page.extract_text()
                 if conteudo:
                     texto += conteudo
+                del page
 
             # RAZAO SOCIAL (Tomador - segunda ocorrência)
             matches_razao = re.findall(r"Nome/Razão Social:\s*(.+)", texto)
@@ -113,9 +137,11 @@ def extrair_dados_pdf_semparar(caminho_pdf):
             # Processar apenas as primeiras 2 páginas para economia de memória
             max_pages = min(2, len(pdf.pages))
             for i in range(max_pages):
-                conteudo = pdf.pages[i].extract_text()
+                page = pdf.pages[i]
+                conteudo = page.extract_text()
                 if conteudo:
                     texto += conteudo + "\n"
+                del page
 
             if not texto.strip():
                 return {
@@ -246,12 +272,16 @@ def processar():
                     'arquivo_renomeado': False
                 })
             finally:
-                # Limpar arquivo original se não foi renomeado (economia de memória)
-                if os.path.exists(caminho) and not any(d.get('arquivo') == filename for d in dados):
-                    try:
-                        os.remove(caminho)
-                    except:
-                        pass
+                # Remover arquivo temporário após extração para liberar espaço
+                for f_to_del in [caminho]:
+                    if os.path.exists(f_to_del) and not any(
+                        d.get('arquivo') not in (None, filename) for d in dados
+                    ):
+                        try:
+                            os.remove(f_to_del)
+                        except Exception:
+                            pass
+                gc.collect()
 
     return jsonify({
         'success': True,
@@ -423,12 +453,16 @@ def processar_semparar():
                         'arquivo_renomeado': False
                     })
                 finally:
-                    # Limpar arquivo original se não foi renomeado (economia de memória)
-                    if os.path.exists(caminho) and not any(d.get('arquivo') == filename for d in dados):
-                        try:
-                            os.remove(caminho)
-                        except:
-                            pass
+                    # Remover arquivo temporário após extração para liberar espaço
+                    for f_to_del in [caminho]:
+                        if os.path.exists(f_to_del) and not any(
+                            d.get('arquivo') not in (None, filename) for d in dados
+                        ):
+                            try:
+                                os.remove(f_to_del)
+                            except Exception:
+                                pass
+                    gc.collect()
 
         return jsonify({
             'success': True,
