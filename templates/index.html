@@ -418,74 +418,77 @@
         // Form Submit - Ticket
         uploadFormTicket.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const formData = new FormData();
-            const files = fileInputTicket.files;
-            
-            for (let file of files) {
-                formData.append('arquivos', file);
-            }
+
+            const files = Array.from(fileInputTicket.files);
+            if (files.length === 0) return;
 
             progressSectionTicket.style.display = 'block';
             resultsSectionTicket.style.display = 'none';
             btnProcessarTicket.disabled = true;
 
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                if (progress < 90) {
-                    progress += Math.random() * 15;
-                    if (progress > 90) progress = 90;
-                    progressFillTicket.style.width = progress + '%';
-                    progressTextTicket.textContent = Math.round(progress) + '%';
-                }
-            }, 200);
+            const todosDados = [];
+            const todosRenomeados = [];
 
-            try {
-                const response = await fetch('/processar', {
-                    method: 'POST',
-                    body: formData
-                });
+            for (let i = 0; i < files.length; i++) {
+                const progress = Math.round(((i) / files.length) * 90);
+                progressFillTicket.style.width = progress + '%';
+                progressTextTicket.textContent = progress + '%';
 
-                const result = await response.json();
+                const formData = new FormData();
+                formData.append('arquivos', files[i]);
 
-                clearInterval(progressInterval);
-                progressFillTicket.style.width = '100%';
-                progressTextTicket.textContent = '100%';
-
-                if (result.success) {
-                    dadosProcessadosTicket = result.dados;
-                    arquivosRenomeadosTicket = result.dados
-                        .filter(d => d.arquivo_renomeado)
-                        .map(d => d.arquivo);
-                    
-                    displayResultsTicket(result.dados);
-                    
-                    // Mostrar botão de download dos PDFs se houver renomeados
-                    const btnDownloadPdfs = document.getElementById('btn-download-pdfs-ticket');
-                    if (arquivosRenomeadosTicket.length > 0) {
-                        btnDownloadPdfs.style.display = 'inline-flex';
+                try {
+                    const response = await fetch('/processar', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        todosDados.push(...result.dados);
+                        if (result.arquivos_renomeados) {
+                            todosRenomeados.push(...result.arquivos_renomeados);
+                        }
+                    } else {
+                        todosDados.push({
+                            arquivo: files[i].name,
+                            razao_social: 'Erro: ' + result.error,
+                            nfse: '', dps_serie: '', arquivo_renomeado: false
+                        });
                     }
-                    
-                    // Mostrar mensagem de arquivos renomeados
-                    if (result.arquivos_renomeados && result.arquivos_renomeados.length > 0) {
-                        setTimeout(() => {
-                            alert(`✅ ${result.arquivos_renomeados.length} arquivo(s) renomeado(s) com sucesso!`);
-                        }, 600);
-                    }
-                    
-                    setTimeout(() => {
-                        progressSectionTicket.style.display = 'none';
-                        resultsSectionTicket.style.display = 'block';
-                    }, 500);
-                } else {
-                    alert('Erro: ' + result.error);
-                    progressSectionTicket.style.display = 'none';
+                } catch (error) {
+                    todosDados.push({
+                        arquivo: files[i].name,
+                        razao_social: 'Erro: ' + error.message,
+                        nfse: '', dps_serie: '', arquivo_renomeado: false
+                    });
                 }
-            } catch (error) {
-                clearInterval(progressInterval);
-                alert('Erro ao processar arquivos: ' + error.message);
-                progressSectionTicket.style.display = 'none';
             }
+
+            progressFillTicket.style.width = '100%';
+            progressTextTicket.textContent = '100%';
+
+            dadosProcessadosTicket = todosDados;
+            arquivosRenomeadosTicket = todosDados
+                .filter(d => d.arquivo_renomeado)
+                .map(d => d.arquivo);
+
+            displayResultsTicket(todosDados);
+
+            const btnDownloadPdfs = document.getElementById('btn-download-pdfs-ticket');
+            if (arquivosRenomeadosTicket.length > 0) {
+                btnDownloadPdfs.style.display = 'inline-flex';
+            }
+
+            if (todosRenomeados.length > 0) {
+                setTimeout(() => {
+                    alert(`✅ ${todosRenomeados.length} arquivo(s) renomeado(s) com sucesso!`);
+                }, 600);
+            }
+
+            setTimeout(() => {
+                progressSectionTicket.style.display = 'none';
+                resultsSectionTicket.style.display = 'block';
+            }, 500);
 
             btnProcessarTicket.disabled = false;
         });
@@ -725,74 +728,81 @@
         // Form Submit - Sem Parar
         uploadFormSemparar.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const formData = new FormData();
-            const files = fileInputSemparar.files;
-            
-            for (let file of files) {
-                formData.append('arquivos', file);
-            }
+
+            const files = Array.from(fileInputSemparar.files);
+            if (files.length === 0) return;
 
             progressSectionSemparar.style.display = 'block';
             resultsSectionSemparar.style.display = 'none';
             btnProcessarSemparar.disabled = true;
 
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                if (progress < 90) {
-                    progress += Math.random() * 15;
-                    if (progress > 90) progress = 90;
-                    progressFillSemparar.style.width = progress + '%';
-                    progressTextSemparar.textContent = Math.round(progress) + '%';
-                }
-            }, 200);
+            const todosDados = [];
+            const todosRenomeados = [];
 
-            try {
-                const response = await fetch('/processar-semparar', {
-                    method: 'POST',
-                    body: formData
-                });
+            for (let i = 0; i < files.length; i++) {
+                const progress = Math.round(((i) / files.length) * 90);
+                progressFillSemparar.style.width = progress + '%';
+                progressTextSemparar.textContent = progress + '%';
 
-                const result = await response.json();
+                const formData = new FormData();
+                formData.append('arquivos', files[i]);
 
-                clearInterval(progressInterval);
-                progressFillSemparar.style.width = '100%';
-                progressTextSemparar.textContent = '100%';
-
-                if (result.success) {
-                    dadosProcessadosSemparar = result.dados;
-                    arquivosRenomeadosSemparar = result.dados
-                        .filter(d => d.arquivo_renomeado)
-                        .map(d => d.arquivo);
-                    
-                    displayResultsSemparar(result.dados);
-                    
-                    // Mostrar botão de download dos PDFs se houver renomeados
-                    const btnDownloadPdfs = document.getElementById('btn-download-pdfs-semparar');
-                    if (arquivosRenomeadosSemparar.length > 0) {
-                        btnDownloadPdfs.style.display = 'inline-flex';
+                try {
+                    const response = await fetch('/processar-semparar', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        todosDados.push(...result.dados);
+                        if (result.arquivos_renomeados) {
+                            todosRenomeados.push(...result.arquivos_renomeados);
+                        }
+                    } else {
+                        todosDados.push({
+                            arquivo: files[i].name,
+                            cnpj: 'Erro: ' + result.error,
+                            cnpj_normalizado: '', numero_fatura: '',
+                            numero_nota_fiscal: '', razao_social: '',
+                            arquivo_renomeado: false
+                        });
                     }
-                    
-                    // Mostrar mensagem de arquivos renomeados
-                    if (result.arquivos_renomeados && result.arquivos_renomeados.length > 0) {
-                        setTimeout(() => {
-                            alert(`✅ ${result.arquivos_renomeados.length} arquivo(s) renomeado(s) com sucesso!`);
-                        }, 600);
-                    }
-                    
-                    setTimeout(() => {
-                        progressSectionSemparar.style.display = 'none';
-                        resultsSectionSemparar.style.display = 'block';
-                    }, 500);
-                } else {
-                    alert('Erro: ' + result.error);
-                    progressSectionSemparar.style.display = 'none';
+                } catch (error) {
+                    todosDados.push({
+                        arquivo: files[i].name,
+                        cnpj: 'Erro: ' + error.message,
+                        cnpj_normalizado: '', numero_fatura: '',
+                        numero_nota_fiscal: '', razao_social: '',
+                        arquivo_renomeado: false
+                    });
                 }
-            } catch (error) {
-                clearInterval(progressInterval);
-                alert('Erro ao processar arquivos: ' + error.message);
-                progressSectionSemparar.style.display = 'none';
             }
+
+            progressFillSemparar.style.width = '100%';
+            progressTextSemparar.textContent = '100%';
+
+            dadosProcessadosSemparar = todosDados;
+            arquivosRenomeadosSemparar = todosDados
+                .filter(d => d.arquivo_renomeado)
+                .map(d => d.arquivo);
+
+            displayResultsSemparar(todosDados);
+
+            const btnDownloadPdfs = document.getElementById('btn-download-pdfs-semparar');
+            if (arquivosRenomeadosSemparar.length > 0) {
+                btnDownloadPdfs.style.display = 'inline-flex';
+            }
+
+            if (todosRenomeados.length > 0) {
+                setTimeout(() => {
+                    alert(`✅ ${todosRenomeados.length} arquivo(s) renomeado(s) com sucesso!`);
+                }, 600);
+            }
+
+            setTimeout(() => {
+                progressSectionSemparar.style.display = 'none';
+                resultsSectionSemparar.style.display = 'block';
+            }, 500);
 
             btnProcessarSemparar.disabled = false;
         });
