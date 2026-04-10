@@ -150,6 +150,7 @@ def extrair_dados_pdf_semparar(caminho_pdf):
     numero_fatura = ""
     numero_nota_fiscal = ""
     razao_social = ""
+    valor_liquido_pagar = ""
 
     try:
         with pdfplumber.open(caminho_pdf) as pdf:
@@ -163,13 +164,22 @@ def extrair_dados_pdf_semparar(caminho_pdf):
                     texto += conteudo + "\n"
                 del page
 
+            # Ler também a última página (onde fica o Valor Líquido a Pagar)
+            if len(pdf.pages) > 2:
+                last_page = pdf.pages[-1]
+                conteudo_last = last_page.extract_text()
+                if conteudo_last:
+                    texto += conteudo_last + "\n"
+                del last_page
+
             if not texto.strip():
                 return {
                     "cnpj": "",
                     "cnpj_normalizado": "",
                     "numero_fatura": "",
                     "numero_nota_fiscal": "",
-                    "razao_social": ""
+                    "razao_social": "",
+                    "valor_liquido_pagar": ""
                 }
 
             # Extração do CNPJ
@@ -192,6 +202,16 @@ def extrair_dados_pdf_semparar(caminho_pdf):
             match_nome = re.search(r'Nome:\s*(.+?)(?:\n|$)', texto)
             if match_nome:
                 razao_social = match_nome.group(1).strip()
+
+            # Extração do Valor Líquido a Pagar (última página)
+            for linha in texto.split('\n'):
+                if 'VALOR L\u00cdQUIDO A PAGAR' in linha.upper() or 'VALOR LIQUIDO A PAGAR' in linha.upper():
+                    match_valor = re.search(r'R\$\s*([\d.]+,\d{2})', linha)
+                    if not match_valor:
+                        match_valor = re.search(r'([\d.]+,\d{2})\s*$', linha.strip())
+                    if match_valor:
+                        valor_liquido_pagar = match_valor.group(1)
+                    break
     except Exception as e:
         logger.error(f"Erro ao extrair dados do PDF Sem Parar: {e}")
         raise
@@ -201,7 +221,8 @@ def extrair_dados_pdf_semparar(caminho_pdf):
         "cnpj_normalizado": cnpj_normalizado,
         "numero_fatura": numero_fatura,
         "numero_nota_fiscal": numero_nota_fiscal,
-        "razao_social": razao_social
+        "razao_social": razao_social,
+        "valor_liquido_pagar": valor_liquido_pagar
     }
 
 
@@ -472,6 +493,7 @@ def processar_semparar():
                         'numero_fatura': '',
                         'numero_nota_fiscal': '',
                         'razao_social': '',
+                        'valor_liquido_pagar': '',
                         'arquivo_renomeado': False
                     })
                 finally:
@@ -674,9 +696,10 @@ def gerar_excel_semparar():
     ws.cell(row=1, column=3, value="Razão Social")
     ws.cell(row=1, column=4, value="Nº Fatura")
     ws.cell(row=1, column=5, value="Nº Nota Fiscal")
+    ws.cell(row=1, column=6, value="Valor Líquido a Pagar")
 
     # Estilizar cabeçalho
-    for col in range(1, 6):
+    for col in range(1, 7):
         cell = ws.cell(row=1, column=col)
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill(start_color="00B894", end_color="00B894", fill_type="solid")
@@ -688,6 +711,7 @@ def gerar_excel_semparar():
         ws.cell(row=idx, column=3, value=registro.get('razao_social', ''))
         ws.cell(row=idx, column=4, value=registro.get('numero_fatura', ''))
         ws.cell(row=idx, column=5, value=registro.get('numero_nota_fiscal', ''))
+        ws.cell(row=idx, column=6, value=registro.get('valor_liquido_pagar', ''))
 
     # Ajustar largura das colunas
     ws.column_dimensions['A'].width = 30
@@ -695,6 +719,7 @@ def gerar_excel_semparar():
     ws.column_dimensions['C'].width = 50
     ws.column_dimensions['D'].width = 15
     ws.column_dimensions['E'].width = 15
+    ws.column_dimensions['F'].width = 22
 
     # Salvar
     nome_arquivo = f"faturas_semparar_{uuid.uuid4().hex[:8]}.xlsx"
