@@ -58,6 +58,8 @@ def extrair_dados_pdf_ticket(caminho_pdf):
     razao_social = ""
     dps_serie = ""
     nfse = ""
+    valor_total_nf = ""
+    valor_liquido_nf = ""
 
     try:
         with pdfplumber.open(caminho_pdf) as pdf:
@@ -101,6 +103,22 @@ def extrair_dados_pdf_ticket(caminho_pdf):
                             if match_dps:
                                 dps_serie = f"{match_dps.group(1)} / {match_dps.group(2)}"
                                 break
+
+                # Valor Total da Nota Fiscal
+                if "VALOR TOTAL DA NOTA FISCAL" in linha.upper():
+                    match_valor = re.search(r'R\$\s*([\d.]+,\d{2})', linha)
+                    if not match_valor:
+                        match_valor = re.search(r'([\d.]+,\d{2})\s*$', linha.strip())
+                    if match_valor:
+                        valor_total_nf = match_valor.group(1)
+
+                # Valor Líquido da Nota Fiscal
+                if "VALOR L\u00cdQUIDO DA NOTA FISCAL" in linha.upper() or "VALOR LIQUIDO DA NOTA FISCAL" in linha.upper():
+                    match_valor = re.search(r'R\$\s*([\d.]+,\d{2})', linha)
+                    if not match_valor:
+                        match_valor = re.search(r'([\d.]+,\d{2})\s*$', linha.strip())
+                    if match_valor:
+                        valor_liquido_nf = match_valor.group(1)
     except Exception as e:
         logger.error(f"Erro ao extrair dados do PDF: {e}")
         raise
@@ -108,7 +126,9 @@ def extrair_dados_pdf_ticket(caminho_pdf):
     return {
         "razao_social": razao_social,
         "nfse": nfse,
-        "dps_serie": dps_serie
+        "dps_serie": dps_serie,
+        "valor_total_nf": valor_total_nf,
+        "valor_liquido_nf": valor_liquido_nf
     }
 
 
@@ -269,6 +289,8 @@ def processar():
                     'razao_social': f'Erro: {str(e)}',
                     'nfse': '',
                     'dps_serie': '',
+                    'valor_total_nf': '',
+                    'valor_liquido_nf': '',
                     'arquivo_renomeado': False
                 })
             finally:
@@ -596,9 +618,11 @@ def gerar_excel():
     ws.cell(row=1, column=2, value="Razão Social")
     ws.cell(row=1, column=3, value="Número NFS-e Nacional")
     ws.cell(row=1, column=4, value="Número DPS / Série DPS")
+    ws.cell(row=1, column=5, value="Valor Total da NF")
+    ws.cell(row=1, column=6, value="Valor Líquido da NF")
 
     # Estilizar cabeçalho
-    for col in range(1, 5):
+    for col in range(1, 7):
         cell = ws.cell(row=1, column=col)
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill(start_color="6A0CAF", end_color="6A0CAF", fill_type="solid")
@@ -609,12 +633,16 @@ def gerar_excel():
         ws.cell(row=idx, column=2, value=registro.get('razao_social', ''))
         ws.cell(row=idx, column=3, value=registro.get('nfse', ''))
         ws.cell(row=idx, column=4, value=registro.get('dps_serie', ''))
+        ws.cell(row=idx, column=5, value=registro.get('valor_total_nf', ''))
+        ws.cell(row=idx, column=6, value=registro.get('valor_liquido_nf', ''))
 
     # Ajustar largura das colunas
     ws.column_dimensions['A'].width = 30
     ws.column_dimensions['B'].width = 50
     ws.column_dimensions['C'].width = 25
     ws.column_dimensions['D'].width = 25
+    ws.column_dimensions['E'].width = 20
+    ws.column_dimensions['F'].width = 20
 
     # Salvar
     nome_arquivo = f"faturas_ticket_{uuid.uuid4().hex[:8]}.xlsx"

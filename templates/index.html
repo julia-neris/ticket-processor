@@ -153,6 +153,8 @@
                                         <th>Razão Social</th>
                                         <th>Número NFS-e Nacional</th>
                                         <th>Número DPS / Série DPS</th>
+                                        <th>Valor Total NF</th>
+                                        <th>Valor Líquido NF</th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-ticket">
@@ -503,6 +505,8 @@
                     <td>${registro.razao_social || '-'}</td>
                     <td>${registro.nfse || '-'}</td>
                     <td>${registro.dps_serie || '-'}</td>
+                    <td>${registro.valor_total_nf || '-'}</td>
+                    <td>${registro.valor_liquido_nf || '-'}</td>
                 `;
                 tableBodyTicket.appendChild(row);
             });
