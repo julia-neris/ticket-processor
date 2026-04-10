@@ -208,27 +208,15 @@ def extrair_dados_pdf_semparar(caminho_pdf):
             if match_nome:
                 razao_social = match_nome.group(1).strip()
 
-            # Extração do Valor Líquido a Pagar (geralmente na última página)
-            linhas_sp = texto.split('\n')
-            for i, linha in enumerate(linhas_sp):
-                linha_upper = linha.upper()
-                # Aceita variações com/sem acento, com/sem dois-pontos, maiúsculas/minúsculas
-                if ('LIQUIDO' in linha_upper or 'L\u00cdQUIDO' in linha_upper) and 'PAGAR' in linha_upper:
-                    logger.debug(f"[SemParar] Linha candidata valor: {repr(linha)}")
-                    # Tenta na mesma linha e nas próximas 3 linhas
-                    for offset in range(0, 4):
-                        if i + offset >= len(linhas_sp):
-                            break
-                        candidato = linhas_sp[i + offset]
-                        logger.debug(f"[SemParar] Candidato [{offset}]: {repr(candidato)}")
-                        match_valor = re.search(r'R\$\s*([\d.]+,\d{2})', candidato)
-                        if not match_valor:
-                            match_valor = re.search(r'\b(\d{1,3}(?:\.\d{3})*,\d{2})\b', candidato)
-                        if match_valor:
-                            valor_liquido_pagar = match_valor.group(1)
-                            break
-                    if valor_liquido_pagar:
-                        break
+            # Extração do Valor Líquido a Pagar (mesma linha do rótulo)
+            for linha in texto.split('\n'):
+                if 'LIQUIDO' in linha.upper() and 'PAGAR' in linha.upper():
+                    match_valor = re.search(r'R\$\s*([\d.]+,\d{2})', linha)
+                    if not match_valor:
+                        match_valor = re.search(r'([\d.]+,\d{2})', linha)
+                    if match_valor:
+                        valor_liquido_pagar = match_valor.group(1)
+                    break
     except Exception as e:
         logger.error(f"Erro ao extrair dados do PDF Sem Parar: {e}")
         raise
