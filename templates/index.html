@@ -263,7 +263,6 @@
                                         <th>Razão Social</th>
                                         <th>Nº Fatura</th>
                                         <th>Nº Nota Fiscal</th>
-                                        <th>Valor Líquido a Pagar</th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-semparar">
@@ -769,7 +768,6 @@
                             cnpj: 'Erro: ' + result.error,
                             cnpj_normalizado: '', numero_fatura: '',
                             numero_nota_fiscal: '', razao_social: '',
-                            valor_liquido_pagar: '',
                             arquivo_renomeado: false
                         });
                     }
@@ -779,7 +777,6 @@
                         cnpj: 'Erro: ' + error.message,
                         cnpj_normalizado: '', numero_fatura: '',
                         numero_nota_fiscal: '', razao_social: '',
-                        valor_liquido_pagar: '',
                         arquivo_renomeado: false
                     });
                 }
@@ -825,7 +822,6 @@
                     <td>${registro.razao_social || '-'}</td>
                     <td>${registro.numero_fatura || '-'}</td>
                     <td>${registro.numero_nota_fiscal || '-'}</td>
-                    <td>${registro.valor_liquido_pagar || '-'}</td>
                 `;
                 tableBodySemparar.appendChild(row);
             });
