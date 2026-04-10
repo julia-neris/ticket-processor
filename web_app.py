@@ -155,18 +155,23 @@ def extrair_dados_pdf_semparar(caminho_pdf):
     try:
         with pdfplumber.open(caminho_pdf) as pdf:
             texto = ""
-            # Processar apenas as primeiras 2 páginas para economia de memória
-            max_pages = min(2, len(pdf.pages))
+            num_pages = len(pdf.pages)
+
+            # Processar as primeiras 2 páginas para cabeçalho/dados gerais
+            max_pages = min(2, num_pages)
+            paginas_lidas = set()
             for i in range(max_pages):
                 page = pdf.pages[i]
                 conteudo = page.extract_text()
                 if conteudo:
                     texto += conteudo + "\n"
+                paginas_lidas.add(i)
                 del page
 
-            # Ler também a última página (onde fica o Valor Líquido a Pagar)
-            if len(pdf.pages) > 2:
-                last_page = pdf.pages[-1]
+            # Garantir que a última página também é lida (Valor Líquido a Pagar)
+            last_idx = num_pages - 1
+            if last_idx not in paginas_lidas:
+                last_page = pdf.pages[last_idx]
                 conteudo_last = last_page.extract_text()
                 if conteudo_last:
                     texto += conteudo_last + "\n"
@@ -203,15 +208,27 @@ def extrair_dados_pdf_semparar(caminho_pdf):
             if match_nome:
                 razao_social = match_nome.group(1).strip()
 
-            # Extração do Valor Líquido a Pagar (última página)
-            for linha in texto.split('\n'):
-                if 'VALOR L\u00cdQUIDO A PAGAR' in linha.upper() or 'VALOR LIQUIDO A PAGAR' in linha.upper():
-                    match_valor = re.search(r'R\$\s*([\d.]+,\d{2})', linha)
-                    if not match_valor:
-                        match_valor = re.search(r'([\d.]+,\d{2})\s*$', linha.strip())
-                    if match_valor:
-                        valor_liquido_pagar = match_valor.group(1)
-                    break
+            # Extração do Valor Líquido a Pagar (geralmente na última página)
+            linhas_sp = texto.split('\n')
+            for i, linha in enumerate(linhas_sp):
+                linha_upper = linha.upper()
+                # Aceita variações com/sem acento, com/sem dois-pontos, maiúsculas/minúsculas
+                if ('LIQUIDO' in linha_upper or 'L\u00cdQUIDO' in linha_upper) and 'PAGAR' in linha_upper:
+                    logger.debug(f"[SemParar] Linha candidata valor: {repr(linha)}")
+                    # Tenta na mesma linha e nas próximas 3 linhas
+                    for offset in range(0, 4):
+                        if i + offset >= len(linhas_sp):
+                            break
+                        candidato = linhas_sp[i + offset]
+                        logger.debug(f"[SemParar] Candidato [{offset}]: {repr(candidato)}")
+                        match_valor = re.search(r'R\$\s*([\d.]+,\d{2})', candidato)
+                        if not match_valor:
+                            match_valor = re.search(r'\b(\d{1,3}(?:\.\d{3})*,\d{2})\b', candidato)
+                        if match_valor:
+                            valor_liquido_pagar = match_valor.group(1)
+                            break
+                    if valor_liquido_pagar:
+                        break
     except Exception as e:
         logger.error(f"Erro ao extrair dados do PDF Sem Parar: {e}")
         raise
